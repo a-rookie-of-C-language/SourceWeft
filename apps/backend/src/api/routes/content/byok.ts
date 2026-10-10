@@ -1,15 +1,53 @@
 import type { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import {
   addByokModelRequestSchema,
   createByokCredentialRequestSchema,
   resolveByokModelCapabilitiesRequestSchema,
+  importCcSwitchRequestSchema,
 } from "@sourceweft/contracts";
 import { contentByokService } from "../../../modules/byok";
-import { getSessionUserId, requireSession } from "../../middleware/auth-session";
+import { importCcSwitch } from "../../../modules/byok/cc-switch-import";
+import {
+  getSessionUserId,
+  requireSession,
+} from "../../middleware/auth-session";
 import { ApiError, ApiResponse } from "../../response/api-response";
 import { ensureObjectBody, requireRouteParam } from "./helpers";
 
 export function registerByokRoutes(app: Hono) {
+  app.use(
+    "/model-gateway/byok-import/cc-switch",
+    bodyLimit({ maxSize: 256 * 1024 }),
+  );
+  app.post("/model-gateway/byok-import/cc-switch", async (c) => {
+    const session = await requireSession(c);
+    if (!session) throw ApiError.unauthorized();
+    const parsed = importCcSwitchRequestSchema.safeParse(
+      await c.req.json().catch(() => null),
+    );
+    if (!parsed.success)
+      throw ApiError.validation(
+        parsed.error.flatten() as Record<string, unknown>,
+      );
+    let result;
+    try {
+      result = await importCcSwitch({
+        ...parsed.data,
+        workspaceId: requireRouteParam(c, "workspaceId"),
+        userId: getSessionUserId(session),
+      });
+    } catch {
+      // SQL driver errors may contain credential parameter values. Do not send
+      // them to the shared error logger or the browser.
+      throw new ApiError(
+        400,
+        "CC_SWITCH_IMPORT_FAILED",
+        "CC Switch import failed. Check workspace access and endpoint configuration.",
+      );
+    }
+    return ApiResponse.success(c, result);
+  });
   app.get("/model-gateway/byok-credentials", async (c) => {
     const session = await requireSession(c);
     if (!session) {

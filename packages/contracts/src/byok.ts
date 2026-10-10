@@ -2,6 +2,25 @@ import { z } from "zod";
 import { modelCatalogKindSchema } from "./model-catalog";
 import { reasoningEffortSchema } from "./stream";
 
+export const importCcSwitchRequestSchema = z
+  .object({
+    sourceId: z.string().trim().min(1).max(256),
+    appType: z.enum(["claude", "codex", "gemini"]),
+    name: z.string().trim().min(1).max(100),
+    providerKind: z.enum(["anthropic", "openai-compatible", "gemini"]),
+    baseUrl: z.string().trim().url().max(2048),
+    apiKey: z.string().trim().min(1).max(4096),
+    models: z.array(z.string().trim().min(1).max(256)).min(1).max(30),
+    updateExisting: z.boolean().default(false),
+  })
+  .strict();
+export type ImportCcSwitchRequest = z.input<typeof importCcSwitchRequestSchema>;
+export type ImportCcSwitchResponse = {
+  status: "imported" | "skipped" | "changed" | "updated";
+  credentialId: string;
+  modelCount: number;
+};
+
 export const byokCredentialSchema = z.object({
   id: z.string(),
   teamId: z.string(),

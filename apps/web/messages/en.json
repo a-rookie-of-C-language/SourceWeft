@@ -1578,6 +1578,44 @@
     "toolExecutionFailed": "Tool execution failed."
   },
   "dashboardChatCanvas": {
+    "ccSwitchImport": {
+      "browserFileHelp": "Close CC Switch first, then choose cc-switch.db from its configuration directory so recent WAL changes are included. The database is parsed locally in your browser; only selected credentials are sent after confirmation.",
+      "title": "Import from CC Switch",
+      "description": "Read CC Switch providers without modifying their configuration. Import selected credentials and LLM models into BYOK.",
+      "detect": "Detect CC Switch",
+      "chooseFile": "Choose database",
+      "desktopRequired": "Open this dialog in SourceWeft desktop to detect CC Switch or choose its SQLite database.",
+      "empty": "No providers found.",
+      "notFound": "CC Switch was not found in the default user directory. Choose its database file.",
+      "cancelled": "File selection cancelled.",
+      "readFailed": "Cannot read this database. Check permissions and the CC Switch database format.",
+      "refreshFailed": "Import finished, but the model list could not be refreshed. Reopen the model selector.",
+      "current": "Current",
+      "keyHidden": "API key detected and hidden.",
+      "models": "Model IDs (comma separated)",
+      "modelRequired": "No model is configured. Enter a model ID to import.",
+      "updateExisting": "Replace this previously imported credential with the changed key, protocol or endpoint.",
+      "consent": "Import selected API keys into the current workspace ({workspace}) on {server}. They will be encrypted on this server.",
+      "close": "Close",
+      "import": "Import selected",
+      "issues": {
+        "invalid_config": "Invalid configuration; no secret details are shown.",
+        "unsupported_protocol": "This Codex wire protocol is not supported.",
+        "unsupported_app": "This application configuration is not supported.",
+        "missing_key": "No API key found. OAuth/login sessions cannot be imported.",
+        "invalid_endpoint": "Invalid endpoint URL."
+      },
+      "warnings": {
+        "responses_as_chat": "This Codex configuration uses Responses. It will be imported using Chat Completions at the same base URL; the endpoint must support Chat Completions."
+      },
+      "results": {
+        "imported": "Imported successfully.",
+        "skipped": "Already imported; skipped.",
+        "changed": "The source credential changed. Confirm replacement to update it.",
+        "updated": "Updated successfully.",
+        "failed": "Import could not be confirmed. Check endpoint accessibility and model IDs, then retry; repeated imports are deduplicated."
+      }
+    },
     "header": {
       "hideSidebar": "Hide sidebar",
       "showSidebar": "Show sidebar",

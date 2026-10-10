@@ -808,6 +808,7 @@ function ByokPanel({
   byokSelection: ByokModelSelection | null;
   byokSelectedModel: ModelItem | null;
   onAddModel?: (input: {
+    ccSwitch?: boolean;
     credentialId?: string;
     providerKind?: string;
     providerName?: string;
@@ -879,7 +880,10 @@ function ByokPanel({
   const selectionCustomModel =
     byokSelection?.mode === "byok" &&
     byokSelection.providerName === providerName
-      ? createCustomModelItemFromSelection({ selection: byokSelection, type }, t)
+      ? createCustomModelItemFromSelection(
+          { selection: byokSelection, type },
+          t,
+        )
       : null;
   const knownModelMap = new Map<string, ModelItem>();
   for (const model of customModels) {
@@ -913,6 +917,23 @@ function ByokPanel({
         }),
       )
     : statusLabel("notConfigured");
+  const importButton =
+    type === "llm" && providerName === CUSTOM_BYOK_PROVIDER_NAME ? (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          onAddModel?.({
+            providerName: CUSTOM_BYOK_PROVIDER_NAME,
+            ccSwitch: true,
+          })
+        }
+      >
+        {t("ccSwitchImport.title")}
+      </Button>
+    ) : null;
+
   const handleAddModel = () => {
     onAddModel?.({
       credentialId: providerCredentials[0]?.id,
@@ -1018,6 +1039,11 @@ function ByokPanel({
               {providerStatus}
             </div>
           </div>
+          {importButton && (
+            <div className="flex justify-end border-b border-border/70 px-3 py-2">
+              {importButton}
+            </div>
+          )}
 
           {!selectedProviderHasKey ? (
             <div className="flex flex-1 items-center justify-center p-6">
@@ -1132,6 +1158,7 @@ function SelectorPanel({
   byokProviders?: ByokProviderOption[];
   byokSelections?: Partial<Record<ModelType, ByokModelSelection | null>>;
   onAddByokModel?: (input: {
+    ccSwitch?: boolean;
     credentialId?: string;
     providerKind?: string;
     providerName?: string;
@@ -1315,6 +1342,7 @@ export function HeaderModelSelector({
   compact?: boolean;
   iconOnly?: boolean;
   onAddByokModel?: (input: {
+    ccSwitch?: boolean;
     credentialId?: string;
     providerKind?: string;
     providerName?: string;

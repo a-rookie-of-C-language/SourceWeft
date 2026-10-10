@@ -38,6 +38,25 @@ export type DesktopInfo = {
   updaterProtocolVersion?: number;
 };
 
+export type CcSwitchCandidate = {
+  sourceId: string;
+  appType: string;
+  name: string;
+  current: boolean;
+  providerKind: "anthropic" | "openai-compatible" | "gemini";
+  baseUrl: string;
+  apiKey: string;
+  models: string[];
+  issue: string | null;
+  warning?: string | null;
+};
+
+export function readCcSwitchConfig(chooseFile = false) {
+  return invokeDesktop<CcSwitchCandidate[]>("read_cc_switch_config", {
+    chooseFile,
+  });
+}
+
 export type AutostartState = {
   enabled: boolean;
   requested: boolean;
