@@ -2,6 +2,7 @@
 mod hub_window;
 mod preview_window;
 mod local_bridge;
+mod cc_switch_bridge;
 mod native_access;
 mod remote_host;
 mod tray_locale;
@@ -110,6 +111,7 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            cc_switch_bridge::read_cc_switch_config,
             updater::get_update_state,
             updater::check_for_updates,
             updater::download_update,
@@ -175,7 +177,12 @@ fn main() {
             register_deep_links(app.handle());
             let base =
                 resolve_app_url(app.handle(), "/dashboard/chat").map_err(std::io::Error::other)?;
-            app.add_capability(native_access::web_capability(&base))?;
+            let dev_url = if cfg!(debug_assertions) {
+                app.config().build.dev_url.as_ref()
+            } else {
+                None
+            };
+            app.add_capability(native_access::configured_web_capability(&base, dev_url))?;
             app.add_capability(native_access::hub_capability(&base))?;
             app.add_capability(preview_window::opener_capability(&base))?;
             app.add_capability(preview_window::reader_capability(&base))?;

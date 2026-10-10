@@ -1578,6 +1578,44 @@
     "toolExecutionFailed": "工具執行失敗。"
   },
   "dashboardChatCanvas": {
+    "ccSwitchImport": {
+      "browserFileHelp": "請先關閉 CC Switch，再選擇其設定目錄中的 cc-switch.db，以包含最新變更。資料庫僅在瀏覽器本機解析，確認後才傳送選中的憑證。",
+      "title": "從 CC Switch 匯入",
+      "description": "唯讀 CC Switch 提供方設定，將選中的憑證和 LLM 模型匯入 BYOK。",
+      "detect": "檢測 CC Switch",
+      "chooseFile": "選擇資料庫",
+      "desktopRequired": "請在 SourceWeft 桌面版開啟此視窗，自動檢測 CC Switch 或選擇其 SQLite 資料庫。",
+      "empty": "未發現提供方。",
+      "notFound": "預設使用者目錄中找不到 CC Switch，請選擇資料庫檔案。",
+      "cancelled": "已取消檔案選擇。",
+      "readFailed": "無法讀取資料庫，請檢查權限和 CC Switch 資料庫格式。",
+      "refreshFailed": "匯入完成，但模型列表重新整理失敗，請重新開啟模型選擇器。",
+      "current": "目前",
+      "keyHidden": "已檢測到 API Key，金鑰已隱藏。",
+      "models": "模型 ID（逗號分隔）",
+      "modelRequired": "設定中沒有模型，請填寫模型 ID。",
+      "updateExisting": "確認使用變更後的金鑰、協議或地址替換上次匯入的憑證。",
+      "consent": "將選中的 API Key 匯入 {server} 上的目前工作區（{workspace}），並在該伺服器加密儲存。",
+      "close": "關閉",
+      "import": "匯入選中設定",
+      "issues": {
+        "invalid_config": "設定格式無效，不展示金鑰詳細資訊。",
+        "unsupported_protocol": "暫不支援此 Codex 呼叫協議。",
+        "unsupported_app": "暫不支援該應用設定。",
+        "missing_key": "找不到 API Key，不支援匯入 OAuth 或登入權杖。",
+        "invalid_endpoint": "介面地址無效。"
+      },
+      "warnings": {
+        "responses_as_chat": "此 Codex 設定使用 Responses，匯入後將以 Chat Completions 協議呼叫原 Base URL；該端點需支援 Chat Completions。"
+      },
+      "results": {
+        "imported": "匯入成功。",
+        "skipped": "已匯入，跳過重複設定。",
+        "changed": "來源憑證有變更，需確認替換才會更新。",
+        "updated": "更新成功。",
+        "failed": "無法確認匯入結果，請檢查地址可達性和模型 ID 後重試；重複匯入會自動去重。"
+      }
+    },
     "header": {
       "hideSidebar": "隱藏側邊欄",
       "showSidebar": "顯示側邊欄",

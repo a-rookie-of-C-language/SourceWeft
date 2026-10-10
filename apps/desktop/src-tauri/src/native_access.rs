@@ -2,6 +2,13 @@
 use tauri::ipc::CapabilityBuilder;
 use url::Url;
 
+pub fn configured_web_capability(base: &Url, dev_url: Option<&Url>) -> CapabilityBuilder {
+    // Tauri classifies the devUrl origin as Local, including HTTP pages.
+    // Commands still authorize the actual main-window URL and dashboard path.
+    let local_dev = dev_url.is_some_and(|dev| same_trusted_origin(base, dev));
+    web_capability(base).local(local_dev)
+}
+
 pub fn web_capability(base: &Url) -> CapabilityBuilder {
     // macOS custom-protocol IPC sends only scheme/host/port, while the
     // postMessage transport may send the full document URL. Match both with
@@ -27,6 +34,7 @@ pub fn web_capability(base: &Url) -> CapabilityBuilder {
         .permission("allow-set-autostart")
         .permission("allow-open-external-url")
         .permission("allow-local-host-status")
+        .permission("allow-read-cc-switch-config")
         .permission("allow-authenticate-local-host")
         .permission("allow-choose-local-folder")
         .permission("allow-disconnect-local-host")
@@ -79,6 +87,31 @@ mod tests {
 
     fn url(value: &str) -> Url {
         Url::parse(value).unwrap()
+    }
+
+    #[test]
+    fn configured_dev_origin_allows_local_ipc_only_when_it_matches() {
+        let base = url("http://localhost:3000/dashboard/chat");
+        for (dev, expected) in [
+            (None, false),
+            (Some(url("http://localhost:3000")), true),
+            (Some(url("http://localhost:3001")), false),
+            (Some(url("https://evil.example")), false),
+        ] {
+            let CapabilityFile::Capability(capability) =
+                configured_web_capability(&base, dev.as_ref()).build()
+            else {
+                panic!("expected capability")
+            };
+            assert_eq!(capability.local, expected);
+            assert_eq!(capability.windows, vec!["main"]);
+            let permissions = serde_json::to_value(&capability.permissions).unwrap();
+            assert!(permissions
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|p| p == "allow-read-cc-switch-config"));
+        }
     }
 
     #[test]
@@ -151,6 +184,7 @@ mod tests {
         for denied in [
             "allow-desktop-titlebar-action",
             "allow-authenticate-local-host",
+            "allow-read-cc-switch-config",
             "allow-choose-local-folder",
             "allow-enable-local-host",
             "allow-set-autostart",

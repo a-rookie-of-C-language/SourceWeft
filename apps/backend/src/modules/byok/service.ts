@@ -25,6 +25,7 @@ import {
   getByokModelRuntimeRecord,
   listByokCredentialRecords,
   listByokModelRecords,
+  fillByokModelCapabilities,
 } from "./repository";
 
 type CapabilitySnapshot = {
@@ -40,7 +41,7 @@ type CapabilitySnapshot = {
   litellmKey?: string;
 };
 
-async function resolveCapabilitySnapshot(modelName: string) {
+export async function resolveCapabilitySnapshot(modelName: string) {
   const capabilities = await resolveModelCapabilitiesFromLitellm(
     modelName,
   ).catch(() => null);
@@ -65,6 +66,22 @@ async function resolveCapabilitySnapshot(modelName: string) {
     supportSources: ["model-catalog"],
     maxCompletionTokens: capabilities.max_completion_tokens ?? null,
   } satisfies CapabilitySnapshot;
+}
+
+export async function resolveImportedModelCapabilities(modelName: string) {
+  return (
+    (await resolveCapabilitySnapshot(modelName)) ?? {
+      supportsThinking: false,
+      supportsImageInput: false,
+      supportedParameters: [],
+      supportedEfforts: [],
+      reasoning: false,
+      reasoningEffort: false,
+      includeReasoning: false,
+      supportSources: ["cc-switch-text-only"],
+      maxCompletionTokens: null,
+    }
+  );
 }
 
 export class ContentByokService {
@@ -225,6 +242,36 @@ export class ContentByokService {
       credentialId: input.credentialId,
     });
 
+    const missing = items.filter(
+      (item) => item.modelType === "llm" && !item.capabilities,
+    );
+    const credentials = missing.length
+      ? await listByokCredentialRecords({
+          teamId: workspace.organizationId,
+          workspaceId: workspace.id,
+          userId: input.userId,
+        })
+      : [];
+    for (const item of missing) {
+      if (item.modelType === "llm" && !item.capabilities) {
+        const imported = credentials.some(
+          (c) =>
+            c.id === item.credentialId &&
+            c.metadata.importSource === "cc-switch",
+        );
+        item.capabilities = imported
+          ? await resolveImportedModelCapabilities(item.modelName)
+          : await resolveCapabilitySnapshot(item.modelName);
+        if (item.capabilities)
+          await fillByokModelCapabilities({
+            teamId: workspace.organizationId,
+            workspaceId: workspace.id,
+            userId: input.userId,
+            modelId: item.id,
+            capabilities: item.capabilities,
+          });
+      }
+    }
     return { items };
   }
 
@@ -339,7 +386,11 @@ export class ContentByokService {
       modelName: resolved.modelName,
       displayName: resolved.displayName,
       modelType: resolved.modelType,
-      capabilities: resolved.capabilities,
+      capabilities:
+        resolved.capabilities ??
+        (resolved.credential.metadata?.importSource === "cc-switch"
+          ? await resolveImportedModelCapabilities(resolved.modelName)
+          : null),
     };
   }
 

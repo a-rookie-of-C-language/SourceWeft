@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import {
   db,
   modelGatewayByokCredentials,
@@ -9,6 +9,27 @@ import { config } from "../../shared/config";
 
 type ByokCredentialRow = typeof modelGatewayByokCredentials.$inferSelect;
 type ByokModelRow = typeof modelGatewayByokModels.$inferSelect;
+
+export async function fillByokModelCapabilities(input: {
+  teamId: string;
+  workspaceId: string;
+  userId: string;
+  modelId: string;
+  capabilities: Record<string, unknown>;
+}) {
+  await db
+    .update(modelGatewayByokModels)
+    .set({ capabilitiesJson: input.capabilities, updatedAt: new Date() })
+    .where(
+      and(
+        eq(modelGatewayByokModels.id, input.modelId),
+        eq(modelGatewayByokModels.teamId, input.teamId),
+        eq(modelGatewayByokModels.workspaceId, input.workspaceId),
+        eq(modelGatewayByokModels.userId, input.userId),
+        isNull(modelGatewayByokModels.capabilitiesJson),
+      ),
+    );
+}
 
 export type ByokCredentialRecord = {
   id: string;
@@ -165,7 +186,8 @@ export async function getByokCredentialWithSecretRecord(input: {
     )
     .limit(1);
   const row = rows.find(
-    (candidate) => candidate.userId === null || candidate.userId === input.userId,
+    (candidate) =>
+      candidate.userId === null || candidate.userId === input.userId,
   );
 
   return row ? mapByokCredentialWithSecret(row) : null;
@@ -191,8 +213,8 @@ export async function createByokCredentialRecord(input: {
       workspaceId: input.workspaceId,
       userId: input.userId,
       providerName: input.providerName,
-providerKind: (input.providerKind ??
-  config.byokDefaultProviderKind) as ByokCredentialRow["providerKind"],
+      providerKind: (input.providerKind ??
+        config.byokDefaultProviderKind) as ByokCredentialRow["providerKind"],
       baseUrl: input.baseUrl ?? null,
       credentialAlias: input.credentialAlias,
       apiKeyEncrypted: input.apiKeyEncrypted,
@@ -279,7 +301,9 @@ export async function listByokModelRecords(input: {
     eq(modelGatewayByokModels.isActive, true),
   ];
   if (input.credentialId) {
-    conditions.push(eq(modelGatewayByokModels.credentialId, input.credentialId));
+    conditions.push(
+      eq(modelGatewayByokModels.credentialId, input.credentialId),
+    );
   }
 
   const rows = await db

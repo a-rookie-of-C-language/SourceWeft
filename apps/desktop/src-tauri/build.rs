@@ -9,6 +9,7 @@ fn main() {
     println!("cargo:rustc-env=SOURCEWEFT_UPDATER_PUBLIC_KEY={}", key.trim());
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
         tauri_build::AppManifest::new().commands(&[
+            "read_cc_switch_config",
             "get_update_state", "check_for_updates", "download_update", "install_update",
             "cancel_update_download", "cancel_update_install", "acknowledge_update_save",
             "set_update_preferences", "snooze_update",

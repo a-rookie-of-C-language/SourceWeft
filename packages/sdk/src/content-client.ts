@@ -1,4 +1,4 @@
-import type { ThreadSourceSelectionResponse, UpdateThreadSourceSelectionRequest } from "@sourceweft/contracts";
+import type { ThreadSourceSelectionResponse, UpdateThreadSourceSelectionRequest, ImportCcSwitchRequest, ImportCcSwitchResponse } from "@sourceweft/contracts";
 import type { RegistryVersionsResponse, RegistryVersionDetail } from "@sourceweft/contracts";
 import type { MarketMcpLocale } from "@sourceweft/market-contracts";
 import type {
@@ -1149,6 +1149,10 @@ export class ContentClient {
     return this.http.get<ListByokCredentialsResponse>(
       `/v1/workspaces/${encode(workspaceId)}/model-gateway/byok-credentials`,
     );
+  }
+
+  importCcSwitch(workspaceId: string, input: ImportCcSwitchRequest) {
+    return this.http.post<ImportCcSwitchResponse>(`/v1/workspaces/${encode(workspaceId)}/model-gateway/byok-import/cc-switch`, input);
   }
 
   createByokCredential(

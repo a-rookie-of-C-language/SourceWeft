@@ -41,6 +41,8 @@ import {
   type ByokSavedModelItem,
 } from "./byok-state";
 
+import { CcSwitchImportDialog } from "./cc-switch-import-dialog";
+
 const CUSTOM_PROVIDER_NAME = "custom";
 
 function getProviderLabel(
@@ -53,6 +55,7 @@ function getProviderLabel(
 }
 
 export type ByokModelConfigDefaults = {
+  ccSwitch?: boolean;
   credentialId?: string;
   providerKind?: string;
   providerName?: string;
@@ -400,6 +403,18 @@ export function ByokModelConfigDialog({
       setSaving(false);
     }
   };
+
+  if (defaults?.ccSwitch) {
+    return (
+      <CcSwitchImportDialog
+        key={workspaceId}
+        open={open}
+        onOpenChange={onOpenChange}
+        workspaceId={workspaceId}
+        onImported={refreshByokState}
+      />
+    );
+  }
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>

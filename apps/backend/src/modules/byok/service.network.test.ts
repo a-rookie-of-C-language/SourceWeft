@@ -48,6 +48,7 @@ vi.mock("./repository", () => ({
   deleteByokModelRecord: vi.fn(),
   listByokCredentialRecords: vi.fn(),
   listByokModelRecords: vi.fn(),
+  fillByokModelCapabilities: vi.fn(),
 }));
 vi.mock("../../shared/model-gateway/byok-provider-resolver", () => ({
   listCustomByokProviders: vi.fn(),
@@ -66,11 +67,73 @@ vi.mock("../../shared/logger", () => ({
 }));
 
 import { ContentByokService } from "./service";
+import { resolveImportedModelCapabilities } from "./service";
+import { resolveModelCapabilitiesFromLitellm } from "../../shared/model-gateway";
+import {
+  listByokModelRecords,
+  listByokCredentialRecords,
+  fillByokModelCapabilities,
+} from "./repository";
 import { ContentError } from "../content/errors";
 
 const service = new ContentByokService();
 const origin = "http://127.0.0.1:11434";
 const scope = { workspaceId: "workspace", userId: "user" };
+
+test("listing repairs existing imported models within the authorized workspace", async () => {
+  vi.mocked(resolveModelCapabilitiesFromLitellm).mockResolvedValueOnce(null);
+  vi.mocked(listByokModelRecords).mockResolvedValueOnce([
+    {
+      id: "model",
+      credentialId: "credential",
+      modelName: "unknown",
+      modelType: "llm",
+      capabilities: null,
+    } as any,
+  ]);
+  vi.mocked(listByokCredentialRecords).mockResolvedValueOnce([
+    { id: "credential", metadata: { importSource: "cc-switch" } } as any,
+  ]);
+  const result = await new ContentByokService().listByokModels(scope);
+  expect(result.items[0]?.capabilities?.supportSources).toEqual([
+    "cc-switch-text-only",
+  ]);
+  expect(fillByokModelCapabilities).toHaveBeenCalledWith(
+    expect.objectContaining({
+      teamId: "team",
+      workspaceId: "workspace",
+      userId: "user",
+      modelId: "model",
+    }),
+  );
+});
+
+test("unknown imported models declare text-only capability without guessing reasoning or images", async () => {
+  vi.mocked(resolveModelCapabilitiesFromLitellm).mockResolvedValueOnce(null);
+  expect(await resolveImportedModelCapabilities("unknown-model")).toMatchObject(
+    {
+      supportsThinking: false,
+      supportsImageInput: false,
+      supportedParameters: [],
+      supportedEfforts: [],
+      supportSources: ["cc-switch-text-only"],
+    },
+  );
+});
+
+test("known imported models retain catalog capabilities", async () => {
+  vi.mocked(resolveModelCapabilitiesFromLitellm).mockResolvedValueOnce({
+    supportsImageInput: true,
+    supportedParameters: ["reasoning_effort"],
+    supportedEfforts: ["high"],
+    max_completion_tokens: 1000,
+  });
+  expect(await resolveImportedModelCapabilities("known-model")).toMatchObject({
+    supportsThinking: true,
+    supportsImageInput: true,
+    supportSources: ["model-catalog"],
+  });
+});
 const recordScope = { ...scope, teamId: "team" };
 
 function credential(baseUrl: string | null = `${origin}/v1`) {
